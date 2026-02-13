@@ -1,0 +1,165 @@
+"Emisor"
+#include <SPI.h>
+#include <mcp_can.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define CAN_CS 10
+#define CAN_INT 2
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+MCP_CAN CAN(CAN_CS);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+void setup() {
+  Serial.begin(9600);
+
+  // CAN
+  while (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) != CAN_OK) {
+    delay(500);
+  }
+  CAN.setMode(MCP_NORMAL);
+  pinMode(CAN_INT, INPUT);
+
+  // OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    while (1);
+  }
+
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println("RECEPTOR CAN");
+  display.display();
+}
+
+void loop() {
+  if (!digitalRead(CAN_INT)) {
+    long unsigned int rxId;
+    unsigned char len;
+    unsigned char rxBuf[8];
+
+    CAN.readMsgBuf(&rxId, &len, rxBuf);
+
+    int8_t tempNTC = (int8_t)rxBuf[0];
+    int8_t tempBMP = (int8_t)rxBuf[1];
+
+    int32_t presionPa =
+      ((int32_t)rxBuf[2] << 24) |
+      ((int32_t)rxBuf[3] << 16) |
+      ((int32_t)rxBuf[4] << 8)  |
+       (int32_t)rxBuf[5];
+
+    float presionhPa = presionPa / 100.0;
+
+    // OLED
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.print("NTC Temp: ");
+    display.print(tempNTC);
+    display.println(" C");
+
+    display.print("BMP Temp: ");
+    display.print(tempBMP);
+    display.println(" C");
+
+    display.print("Presion:");
+    display.print(presionhPa, 1);
+    display.println(" hPa");
+
+    display.display();
+
+    // Debug
+    Serial.print("NTC: "); Serial.print(tempNTC);
+    Serial.print(" BMP: "); Serial.print(tempBMP);
+    Serial.print(" Presion: "); Serial.print(presionhPa);
+    Serial.println(" hPa");
+  }
+}
+______________________________________________________________
+"RECEPTOR"
+#include <SPI.h>
+#include <mcp_can.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define CAN_CS 10
+#define CAN_INT 2
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+MCP_CAN CAN(CAN_CS);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+void setup() {
+  Serial.begin(9600);
+
+  // CAN
+  while (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) != CAN_OK) {
+    delay(500);
+  }
+  CAN.setMode(MCP_NORMAL);
+  pinMode(CAN_INT, INPUT);
+
+  // OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    while (1);
+  }
+
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println("RECEPTOR CAN");
+  display.display();
+}
+
+void loop() {
+  if (!digitalRead(CAN_INT)) {
+    long unsigned int rxId;
+    unsigned char len;
+    unsigned char rxBuf[8];
+
+    CAN.readMsgBuf(&rxId, &len, rxBuf);
+
+    int8_t tempNTC = (int8_t)rxBuf[0];
+    int8_t tempBMP = (int8_t)rxBuf[1];
+
+    int32_t presionPa =
+      ((int32_t)rxBuf[2] << 24) |
+      ((int32_t)rxBuf[3] << 16) |
+      ((int32_t)rxBuf[4] << 8)  |
+       (int32_t)rxBuf[5];
+
+    float presionhPa = presionPa / 100.0;
+
+    // OLED
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.print("NTC Temp: ");
+    display.print(tempNTC);
+    display.println(" C");
+
+    display.print("BMP Temp: ");
+    display.print(tempBMP);
+    display.println(" C");
+
+    display.print("Presion:");
+    display.print(presionhPa, 1);
+    display.println(" hPa");
+
+    display.display();
+
+    // Debug
+    Serial.print("NTC: "); Serial.print(tempNTC);
+    Serial.print(" BMP: "); Serial.print(tempBMP);
+    Serial.print(" Presion: "); Serial.print(presionhPa);
+    Serial.println(" hPa");
+  }
+}
